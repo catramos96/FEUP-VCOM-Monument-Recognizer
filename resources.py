@@ -5,35 +5,35 @@ from keras.preprocessing.image import ImageDataGenerator
 import matplotlib.pyplot as plt
 from keras import optimizers
 from keras import callbacks
+from keras.applications.vgg16 import VGG16
 
-n_epochs = 100
-validation_split = 0.2
+n_epochs = 50  # 50
+validation_split = 0.3
+
+batch_size = 15   # 32       #treinar com 20
+image_size = 100  # 128     #treinar com 350
 
 model_name = "monuments.h5"
 weights_name = "weights.best.hdf5"
 plot_name = "training_plot.png"
 
-labels = ["Arrabida", "Camara", "Clerigos", "Musica", "Serralves"]
+labels = ["arrabida", "camara", "clerigos", "musica", "serralves"]
 
 
-def create_model(n_classes):
+def create_model():
+    model = VGG16(weights='imagenet', include_top=False,
+                  input_shape=(image_size, image_size, 3))
 
-    # Step 1.1: Import the pre trained model
-    vgg_conv = VGG16(weights='imagenet', include_top=False,
-                     input_shape=(64, 64, 3))
-
-    for layer in vgg_conv.layers[:-4]:
+    for layer in model .layers[:-4]:
         layer.trainable = False
 
-    # Step 1.2: Create model
-    model = models.Sequential()
-    model.add(vgg_conv)
-    model.add(layers.Flatten())
-    model.add(layers.Dense(1024, activation='relu'))
-    model.add(layers.Dropout(0.5))
-    model.add(layers.Dense(n_classes, activation='softmax'))
+    flatten = layers.Flatten()
+    output = layers.Dense(len(labels) + 4, activation='softmax')
 
-    model.summary()
+    inp2 = model.input
+    out2 = output(flatten(model.output))
+
+    model = models.Model(inp2, out2)
 
     return model
 
@@ -54,31 +54,19 @@ def prepare_datasets(train_directory):
 
     #test_datagen = ImageDataGenerator(rescale=1./255)
 
-    batch_size = 32
-    image_size = 64
-
     train_generator = train_datagen.flow_from_directory(
         train_directory,
         subset='training',
         target_size=(image_size, image_size),
         batch_size=batch_size,
         class_mode='categorical')
-        
+
     test_generator = train_datagen.flow_from_directory(
         train_directory,
         subset='validation',
         target_size=(image_size, image_size),
         batch_size=batch_size,
         class_mode='categorical')
-
-    '''
-    test_set = test_datagen.flow_from_directory(
-        test_directory,
-        target_size=(64, 64),
-        batch_size=32,
-        class_mode='categorical',
-        shuffle=False)
-    '''
 
     return train_generator, test_generator
 
@@ -121,6 +109,7 @@ def plot_history(history):
     plt.savefig(plot_name)
     plt.show()
 
+
 def save_best_model():
 
     model = create_model(len(labels))
@@ -145,9 +134,9 @@ class CallbackSaveMode(callbacks.Callback):
         new_acc = logs.get('acc')
         new_loss = logs.get('loss')
 
-        #if(new_acc >= self.acc and new_loss <= self.loss and new_val_acc >= self.val_acc and new_val_loss <= self.val_loss):
+        # if(new_acc >= self.acc and new_loss <= self.loss and new_val_acc >= self.val_acc and new_val_loss <= self.val_loss):
 
-        #save while loss of the training and validation set are decreasing
+        # save while loss of the training and validation set are decreasing
         if(new_loss <= self.loss and new_val_loss <= self.val_loss):
             self.val_acc = new_val_acc
             self.val_loss = new_val_loss
