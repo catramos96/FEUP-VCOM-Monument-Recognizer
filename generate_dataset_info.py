@@ -1,4 +1,8 @@
+#!/usr/bin/env python
+
 from keras.preprocessing import image
+from keras.preprocessing.image import img_to_array
+from keras.preprocessing.image import load_img
 from xml.dom import minidom
 import os
 import os.path
@@ -14,6 +18,8 @@ def get_data_info(base_directory, class_name, class_index):
     f = open(info_file_path, "w+")
 
     first = True
+
+    n_instances = 0
 
     # iterate files in images fot the class
 
@@ -58,9 +64,11 @@ def get_data_info(base_directory, class_name, class_index):
 
             f.write(info)
 
+            n_instances += 1
+
     f.close()
 
-    return info_file_path
+    return info_file_path, n_instances
 
 
 if __name__ == "__main__":
@@ -76,6 +84,7 @@ if __name__ == "__main__":
 
     classes_code = "classes = [\""
     info_code = "data_info = [\""
+    instances_code = "n_instances_info = ["
 
     first = True
     n_classes = 0
@@ -86,7 +95,8 @@ if __name__ == "__main__":
         # check for directories = classes
         if(os.path.isdir(os.path.join(images_dir, class_name))):
 
-            info_path = get_data_info(base_dir, class_name, n_classes)
+            info_path, n_instances = get_data_info(
+                base_dir, class_name, n_classes)
             n_classes += 1
 
             if(first):
@@ -94,16 +104,22 @@ if __name__ == "__main__":
             else:
                 classes_code += "\", \""
                 info_code += "\", \""
+                instances_code += ", "
 
             classes_code += class_name
             info_code += info_path
+            instances_code += str(n_instances)
 
     classes_code += "\"]"
     info_code += "\"]"
+    instances_code += "]"
 
     # save on a python file the classes and path to the info abour each class data
+    p.write("#!/usr/bin/env python\n\n")
     p.write(classes_code)
     p.write("\n\n")
     p.write(info_code)
+    p.write("\n\n")
+    p.write(instances_code)
 
     p.close()

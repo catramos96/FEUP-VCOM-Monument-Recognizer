@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from keras.applications.vgg16 import decode_predictions
 import sys
 import os
@@ -16,12 +18,6 @@ else:
 
 # export trained model
 model = resources.create_model(len(resources.labels))
-model.summary()
-model.compile(
-    optimizer=optimizers.RMSprop(lr=1e-4),
-    loss='categorical_crossentropy',
-    metrics=['accuracy'])
-
 model.load_weights("weights.best.hdf5")
 
 # predict label
@@ -32,6 +28,7 @@ test_img = img.reshape(1, resources.image_size, resources.image_size, 3)
 
 predictions = model.predict(test_img)
 print(predictions)
+
 '''
 # convert the probabilities to class labels
 label = decode_predictions(predictions)
