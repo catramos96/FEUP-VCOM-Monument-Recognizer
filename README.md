@@ -16,6 +16,8 @@ This Project Recognizes Porto Monuments with deep learning technics: Ponte da Ar
 10.  ```pip install tensorflow-gpu```
 11.  ```pip install pillow```
 12. ```pip install matplotlib``` 
+13. ```pip install scikit-learn```
+14. ```sudo apt-get install python-opencv```
 
 ## Build / Run
 1. Download and extract the dataset repository from this [link](https://drive.google.com/file/d/1DXmnP-Cl2E0a4B1qFzxtC8YaS2ebH5xA/view), and place the 'data' folder in this project root directory
