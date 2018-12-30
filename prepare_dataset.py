@@ -250,12 +250,14 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
     return image_data, box_data
 
 
-def draw_image_box(img, xmin, ymin, xmax, ymax):
+def draw_image_box(img, xmin, ymin, width, height):
 
-    cv2.line(img, (xmin, ymin), (xmin, ymax), (255, 0, 0), 2)
-    cv2.line(img, (xmin, ymin), (xmax, ymin), (255, 0, 0), 2)
-    cv2.line(img, (xmax, ymax), (xmin, ymax), (255, 0, 0), 2)
-    cv2.line(img, (xmax, ymax), (xmax, ymin), (255, 0, 0), 2)
+    cv2.line(img, (xmin, ymin), (xmin, ymin+height), (255, 0, 0), 2)
+    cv2.line(img, (xmin, ymin), (xmin+width, ymin), (255, 0, 0), 2)
+    cv2.line(img, (xmin+width, ymin+height),
+             (xmin, ymin+height), (255, 0, 0), 2)
+    cv2.line(img, (xmin+width, ymin+height),
+             (xmin+width, ymin), (255, 0, 0), 2)
 
     cv2.imshow('image', img)
 

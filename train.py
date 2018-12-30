@@ -6,10 +6,28 @@ import data_resources
 import model_resources
 from keras.callbacks import TensorBoard
 from keras.callbacks import ModelCheckpoint
-
-
 from keras import backend as K
-K.clear_session()
+import os.path
+import sys
+
+model_path = ""
+confif = ""
+ok = True
+
+if len(sys.argv) >= 3:
+    config = sys.argv[1]
+    model_path = sys.argv[2]
+
+    if(config != "-o" and config != "-n" and (not os.path.isfile(model_path) and config == "-n")):
+        ok = False
+else:
+    ok = False
+
+
+if(not ok):
+    print(
+        "python train.py [-o|-n] [model_path]\n-o\ttrain old model\n-n\ttrain new model")
+    exit()
 
 '''
 tensorboard --logdir=tensorboard  --port=8008
@@ -25,6 +43,9 @@ X_training, X_validation, Y_training, Y_validation = prepare_dataset.prepare_dat
 model = model_resources.create_model(
     constants.IMAGE_SIZE, len(data_resources.classes)+4)
 
+if(config == "-o"):
+    model.load_weights(model_path)
+
 # callbacks
 tb = TensorBoard(
     log_dir=constants.TENSORBOARD_DIR,
@@ -38,7 +59,8 @@ tb = TensorBoard(
     embeddings_metadata=None)
 
 callback = model_resources.CallbackSaveMode()
-callbacks_list = [callback]
+callback.set_model_path(model_path)
+callbacks_list = [callback]  # ,tb]
 
 n_train, n_val = prepare_dataset.get_train_val_n_samples(
     constants.VALIDATION_SPLIT)
@@ -64,10 +86,5 @@ history = model.fit_generator(
     verbose=1,
     callbacks=callbacks_list)
 
-# save
-model_resources.save_best_model()
-
 # statistics
 model_resources.plot_history(history)
-
-K.clear_session()

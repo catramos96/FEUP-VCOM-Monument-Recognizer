@@ -24,7 +24,7 @@ This Project Recognizes Porto Monuments with deep learning technics: Ponte da Ar
   
 ## Pre Processing
 
-Before running any of the bellow options, a folder with the necessary data containing a subfolder for annotations and images. Each of these subfolders must contain a subfolder for each class and inside the necessary files. The annotation files must be in xml with information about xmin, ymin, xmax and ymax of the bounding box of a specific image. The pair (image,annotation) files must have the same name (without considering the extension).
+Before running any of the bellow options, a folder with the necessary data containing a subfolder for annotations and images. Each of these subfolders must contain a subfolder for each class and inside the necessary files. The annotation files must be in xml with information about xmin, ymin, width and height of the bounding box of a specific image. The pair (image,annotation) files must have the same name (without considering the extension).
   
 An example of the folder 'data' structure:
 
@@ -50,7 +50,7 @@ To join information across data and to allow a generic implementation it is nece
 
 ```python3 generate_dataset_info.py [path_to_data_folder]```
 
-This will join information for each image with its respective annotation. For each class, a ```[class_name]_information.txt``` will be created with the oint information from the image and its annotation in the format: "image_path xmin,ymin,xmax,ymax,class_index".These .txt files will be created inside the data folder.
+This will join information for each image with its respective annotation. For each class, a ```[class_name]_information.txt``` will be created with the oint information from the image and its annotation in the format: "image_path xmin,ymin,width,height,class_index".These .txt files will be created inside the data folder.
 
 Example: ```data/images/musica/musica-0068.jpg 11,40,259,167,0```
 

@@ -14,10 +14,19 @@ from keras.preprocessing import image
 from keras import optimizers
 import prepare_dataset
 
-if len(sys.argv) > 1:
+ok = True
+
+if len(sys.argv) > 2:
     image_path = sys.argv[1]
+    model_path = sys.argv[2]
+
+    if(not os.path.isfile(model_path) and (not os.path.isfile(image_path))):
+        ok = False
 else:
-    print("Error no image path specified")
+    ok = False
+
+if(not ok):
+    print("python predict.py [image_path] [model_path]")
     exit()
 
 n_classes = len(data_resources.classes)
@@ -25,7 +34,7 @@ n_classes = len(data_resources.classes)
 # export trained model
 model = model_resources.create_model(
     constants.IMAGE_SIZE, n_classes+4)
-model.load_weights("weights.best.hdf5")
+model.load_weights(model_path)
 
 # predict label
 img = image.load_img(path=image_path, target_size=(
