@@ -278,7 +278,13 @@ def get_train_val_n_samples(validation_split):
     return int(n_training), int(n_validation)
 
 
-def generator(batch_size, input_shape, validation_split, is_training):
+'''
+If guarantee_class_division is True then the division of classes on the batches will be guaranteed.
+For this the size of the batches will be n_classes * batches
+'''
+
+
+def generator(batch_size, input_shape, validation_split, is_training, guarantee_class_division):
 
     n_training, n_validation = get_train_val_n_samples(validation_split)
 
@@ -289,43 +295,52 @@ def generator(batch_size, input_shape, validation_split, is_training):
 
         for b in range(batch_size):
 
-            # choose random class
-            rnd_class = randint(0, len(data_resources.classes)-1)
-            class_file_info = data_resources.data_info[rnd_class]
+            classes = []
 
-            with open(class_file_info) as f:
-                content = f.readlines()
-                content = [x.strip() for x in content]
+            # choose random class per batch
+            if(not guarantee_class_division):
+                rnd_class = randint(0, len(data_resources.classes)-1)
+                classes.append(rnd_class)
+            # aditional batch per class
+            else:
+                classes = np.arange(len(data_resources.classes))
 
-                '''
-                # choose random line
-                if(is_training):
-                    rnd_line = randint(0, len(content[:n_training])-1)
-                else:
-                    rnd_line = randint(
-                        0, len(content[n_training:n_validation])-1)
-                '''
-                rnd_line = randint(
-                    0, data_resources.n_instances_info[rnd_class]-1)
-                line = content[rnd_line]
+            for i in range(len(classes)):
 
-                # random transformations
-                image, box = get_random_data(
-                    line, input_shape, True, 1)
-                box = box[0]  # just one box per image
+                with open(data_resources.data_info[i]) as f:
 
-                # calculate label
-                classes = np.zeros(5)
-                classes[int(box[4])] = 1
+                    content = f.readlines()
+                    content = [x.strip() for x in content]
 
-                y = np.concatenate((classes, box[:4]))
+                    # choose random line
+                    if(is_training):
+                        rnd_line = randint(0, len(content[:n_training])-1)
+                    else:
+                        rnd_line = randint(
+                            0, len(content[n_training:n_validation+n_training])-1)
+                    line = content[rnd_line]
 
-                X_batches.append(image)
-                Y_batches.append(y)
+                    # random transformations
+                    image, box = get_random_data(
+                        line, input_shape, True, 1)
+
+                    # just one box per image
+                    box = box[0]
+
+                    # build label
+                    classes = np.zeros(5)
+                    classes[int(box[4])] = 1
+
+                    y = np.concatenate((classes, box[:4]))
+
+                    # save to set
+                    X_batches.append(image)
+                    Y_batches.append(y)
 
         X_batches = np.array(X_batches)
         Y_batches = np.array(Y_batches)
-        yield X_batches, Y_batches
+
+        yield(X_batches, Y_batches)
 
 
 def prepare_datasets(batch_size, image_size, validation_split):

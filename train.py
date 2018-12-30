@@ -40,23 +40,34 @@ tb = TensorBoard(
 callback = model_resources.CallbackSaveMode()
 callbacks_list = [callback]
 
+n_train, n_val = prepare_dataset.get_train_val_n_samples(
+    constants.VALIDATION_SPLIT)
+
 # train
+is_balanced_data = True
+batch_mult = 1
+
+# adjust batch size for steps
+if(is_balanced_data):
+    batch_mult = 5
+
 history = model.fit_generator(
     prepare_dataset.generator(constants.BATCH_SIZE, (constants.IMAGE_SIZE,
-                                                     constants.IMAGE_SIZE), constants.VALIDATION_SPLIT, True),
-    # 20,  # train_set.samples/train_set.batch_size,
-    steps_per_epoch=constants.STEPS_PER_EPOCH,
+                                                     constants.IMAGE_SIZE), constants.VALIDATION_SPLIT, True, is_balanced_data),
+    steps_per_epoch=max(
+        1, n_train/(constants.BATCH_SIZE*batch_mult)),
     epochs=constants.N_EPOCHS,
     validation_data=prepare_dataset.generator(constants.BATCH_SIZE, (constants.IMAGE_SIZE,
-                                                                     constants.IMAGE_SIZE), constants.VALIDATION_SPLIT, False),
-    validation_steps=constants.VALIDATION_STEPS,
+                                                                     constants.IMAGE_SIZE), constants.VALIDATION_SPLIT, False, is_balanced_data),
+    validation_steps=max(
+        1, n_val/(constants.BATCH_SIZE*batch_mult)),
     verbose=1,
     callbacks=callbacks_list)
 
 # save
-resources.save_best_model()
+model_resources.save_best_model()
 
 # statistics
-resources.plot_history(history)
+model_resources.plot_history(history)
 
 K.clear_session()

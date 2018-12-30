@@ -24,7 +24,7 @@ This Project Recognizes Porto Monuments with deep learning technics: Ponte da Ar
   
 ## Pre Processing
 
-Before running any of the bellow options, a folder with the necessary data containing a subfolder for annotations and images. Each of these subfolders must contain a subfolder for each class and inside the necessary files. The annotation files must be in xml with information about <xmin> ... <xmin>, <xmax> ... <xmax>, <ymin> ... <ymin> and <ymax> ...<ymax> of the bounding box of a specific image. The pair <image,annotation> files must have the same name (without considering the extension).
+Before running any of the bellow options, a folder with the necessary data containing a subfolder for annotations and images. Each of these subfolders must contain a subfolder for each class and inside the necessary files. The annotation files must be in xml with information about xmin, ymin, xmax and ymax of the bounding box of a specific image. The pair (image,annotation) files must have the same name (without considering the extension).
   
 An example of the folder 'data' structure:
 

@@ -25,11 +25,11 @@ def create_model(input_size, output_size):
     model.add(layers.Flatten())
     model.add(layers.Dense(1024, activation='relu'))
     model.add(layers.Dropout(0.5))
-    model.add(layers.Dense(output_size, activation='softmax'))
+    model.add(layers.Dense(output_size, activation='relu'))
 
     model.compile(
-        optimizer=optimizers.RMSprop(lr=1e-4),
-        loss='categorical_crossentropy',
+        optimizer=optimizers.Adam(lr=1e-4),
+        loss='mse',
         metrics=['accuracy'])
 
     model.summary()
