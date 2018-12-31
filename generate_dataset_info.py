@@ -47,12 +47,16 @@ def get_data_info(base_directory, class_name, class_index):
                 'xmin')[0].firstChild.nodeValue), 0))
             ymin = int(round(float(xmldoc.getElementsByTagName(
                 'ymin')[0].firstChild.nodeValue), 0))
-            width = int(round(float(xmldoc.getElementsByTagName(
-                'width')[0].firstChild.nodeValue), 0))
-            height = int(round(float(xmldoc.getElementsByTagName(
-                'height')[0].firstChild.nodeValue), 0))
+            xmax = int(round(float(xmldoc.getElementsByTagName(
+                'xmax')[0].firstChild.nodeValue), 0))
+            ymax = int(round(float(xmldoc.getElementsByTagName(
+                'ymax')[0].firstChild.nodeValue), 0))
 
             endline = ""
+
+            # calculate width and height
+            width = xmax - xmin
+            height = ymax - ymin
 
             if(not first):
                 endline = "\n"

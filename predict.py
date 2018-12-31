@@ -43,10 +43,31 @@ img = image.img_to_array(img)
 test_img = img.reshape(1, constants.IMAGE_SIZE, constants.IMAGE_SIZE, 3)
 
 predictions = model.predict(test_img)
-print(predictions)
 
+# parse predicions
+classes_predictions = predictions[0][:len(data_resources.classes)]  # class
+box_prediction = predictions[0][len(
+    data_resources.classes):]       # normalized box
+
+prepare_dataset.desnormalize_box(
+    box_prediction, constants.IMAGE_SIZE)    # desnormalized box
+
+# calculate best class
+class_predicted = -1
+max_ = 0
+
+for i in range(len(classes_predictions)):
+
+    if classes_predictions[i] > max_:
+        max_ = classes_predictions[i]
+        class_predicted = data_resources.classes[i]
+
+print("Predicted class: {}".format(class_predicted))
+print("Predicted bounding box: {}".format(box_prediction))
+
+# draw image and box
 image = cv2.imread(image_path)
 image = cv2.resize(image, (constants.IMAGE_SIZE, constants.IMAGE_SIZE))
 
-draw_image_box(image, predictions[n_classes],
-               predictions[n_classes+1], predictions[n_classes+2], predictions[n_classes+3])
+draw_image_box(
+    image, box_prediction[0], box_prediction[1], box_prediction[2], box_prediction[3])

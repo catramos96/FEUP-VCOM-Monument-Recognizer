@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import constants
 from keras.preprocessing.image import load_img
 from keras.preprocessing import image
 import data_resources
@@ -157,7 +158,7 @@ def hsv_to_rgb(hsv):
 # from: https://github.com/qqwweee/keras-yolo3S
 
 
-def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jitter=.3, hue=.1, sat=1.5, val=1.5, proc_img=True):
+def get_random_data(annotation_line, input_shape, random=True, max_boxes=1, jitter=.3, hue=.1, sat=1.5, val=1.5, proc_img=True):
     '''random preprocessing for real-time data augmentation'''
     line = annotation_line.split()
     image = Image.open(line[0])
@@ -165,6 +166,11 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
     h, w = input_shape
     box = np.array([np.array(list(map(int, box.split(','))))
                     for box in line[1:]])
+
+    # convert [xmin, ymin, width, height] to [xmin, ymin, xmax, ymax]
+    for b in box:
+        b[2] = b[0] + b[2]
+        b[3] = b[1] + b[3]
 
     if not random:
         # resize image
@@ -194,7 +200,7 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
 
     # resize image
     new_ar = w/h * rand(1-jitter, 1+jitter)/rand(1-jitter, 1+jitter)
-    scale = rand(.25, 2)
+    scale = rand(1, 2)
     if new_ar < 1:
         nh = int(scale*h)
         nw = int(nh*new_ar)
@@ -247,6 +253,11 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
             box = box[:max_boxes]
         box_data[:len(box)] = box
 
+    # convert [xmin, ymin, xmax, ymax] to [xmin, ymin, width, height]
+    for b in box_data:
+        b[2] = b[2] - b[0]
+        b[3] = b[3] - b[1]
+
     return image_data, box_data
 
 
@@ -278,6 +289,18 @@ def get_train_val_n_samples(validation_split):
     n_training = min_inst - n_validation                    # data - n_valiidation
 
     return int(n_training), int(n_validation)
+
+
+def normalize_box(box, image_size):
+
+    for i in range(4):
+        box[i] = float(box[i]/image_size)
+
+
+def desnormalize_box(box, image_size):
+
+    for i in range(4):
+        box[i] = box[i] * image_size
 
 
 '''
@@ -329,7 +352,10 @@ def generator(batch_size, input_shape, validation_split, is_training, guarantee_
                     # just one box per image
                     box = box[0]
 
-                    # build label
+                    # normalize
+                    normalize_box(box, input_shape[0])
+
+                    # build class label (array of zeros with 1 on the correct class)
                     classes = np.zeros(5)
                     classes[int(box[4])] = 1
 
@@ -345,86 +371,23 @@ def generator(batch_size, input_shape, validation_split, is_training, guarantee_
         yield(X_batches, Y_batches)
 
 
-def prepare_datasets(batch_size, image_size, validation_split):
+'''
+# TEST transformations on image and box
+text = "data4/images/arrabida/arrabida-0037.jpg 0,160,593,132,1"
 
-    n_training, n_validation = get_train_val_n_samples(validation_split)
+image, box = get_random_data(
+    text, (constants.IMAGE_SIZE, constants.IMAGE_SIZE), True, 1)
 
-    total = n_validation + n_training
+# just one box
+box = box[0]
 
-    X_training = []
-    Y_training = []
-    X_validation = []
-    Y_validation = []
+cv2.imshow('image', image)
+img = np.zeros((constants.IMAGE_SIZE, constants.IMAGE_SIZE))
+draw_image_box(image, int(box[0]), int(
+    box[1]), int(box[2]), int(box[3]))
 
-    n = 0
-    batch = 0
-
-    # TEST transformations on image and box
-    '''
-    text = "data/images/arrabida/arrabida-0037.jpg 0,160,593,292,1"
-
-    image, box = get_random_data(text,(image_size,image_size),True,1)
-
-    cv2.imshow('image', image)
-    img = np.zeros((image_size,image_size))
-    draw_image_box(image,int(box[0][0]),int(box[0][1]),int(box[0][2]),int(box[0][3]))
-    print(box)
-    '''
-
-    # iterate classes informations .txt
-    for info_path in data_resources.data_info:
-
-        print("\n{}\n".format(info_path))
-
-        with open(info_path) as f:
-            content = f.readlines()
-            content = [x.strip() for x in content]
-
-            n = 0
-
-            # iterate each line
-            for line in content:
-
-                if(n >= total):
-                    break
-
-                n += 1
-                batch = 0
-
-                # create batches per image
-                for batch in range(0, batch_size):
-
-                    batch += 1
-
-                    image, box = get_random_data(
-                        line, (image_size, image_size), True, 1)
-                    box = box[0]  # just one box per image
-
-                    classes = np.zeros(5)
-                    classes[int(box[4])] = 1
-
-                    y = np.concatenate((classes, box[:4]))
-
-                    X_training.append(np.array(image))
-                    Y_training.append(y)
-                    print("OUTPUT ({}:{}): {}".format(n, batch, y))
-
-    # shuffle
-    X_training, Y_training = shuffle(X_training, Y_training, random_state=0)
-
-    # size of training (training_images * batches * classes)
-    size_t = n_training*batch_size*len(data_resources.classes)
-
-    X_validation = X_training[size_t:]
-    Y_validation = Y_training[size_t:]
-
-    X_training = X_training[:size_t]
-    Y_training = Y_training[:size_t]
-
-    return X_training, X_validation, Y_training, Y_validation
-
-# TEST
-# X_t, X_v, Y_t, Y_v = prepare_datasets(3, 500, 0.3)
-
-
-#data_generator(3, (500, 500), 0.3, True)
+normalize_box(box, constants.IMAGE_SIZE)
+print("After normalizing: {}".format(box))
+desnormalize_box(box, constants.IMAGE_SIZE)
+print("After desnormalizing: {}".format(box))
+'''
